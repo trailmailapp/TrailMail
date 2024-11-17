@@ -1,0 +1,6 @@
+﻿services:
+  trailmail.webapi:
+    image: trailmail.webapi
+    build:
+      context: .
+      dockerfile: TrailMail.WebApi/Dockerfile
