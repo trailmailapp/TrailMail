@@ -1,15 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    </PropertyGroup>
+      <UserSecretsId>1f2893ad-fb7f-4c27-a480-bec330313cb9</UserSecretsId>
+  </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
-        <PackageReference Include="Scalar.AspNetCore" Version="1.2.39" />
+        <PackageReference Include="Microsoft.SemanticKernel" Version="1.30.0" />
+        <PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.30.0-preview" />
+        <PackageReference Include="Scalar.AspNetCore" Version="1.2.43" />
     </ItemGroup>
 
     <ItemGroup>

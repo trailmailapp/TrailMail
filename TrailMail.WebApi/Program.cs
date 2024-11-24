@@ -1,6 +1,37 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.HuggingFace;
+using Microsoft.SemanticKernel.TextGeneration;
 using Scalar.AspNetCore;
+using TrailMail.WebApi.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#region Semantic Kernel
+
+builder.Services.AddOptions<HuggingFaceOptions>()
+    .Bind(builder.Configuration.GetSection("HuggingFace"));
+
+builder.Services.AddKeyedSingleton<ITextGenerationService>("HuggingFace", (sp, _) =>
+{
+#pragma warning disable SKEXP0070
+
+    return new HuggingFaceTextGenerationService(
+        "microsoft/Phi-3-mini-4k-instruct",
+        apiKey: sp.GetRequiredService<IOptions<HuggingFaceOptions>>().Value.ApiKey
+    );
+
+#pragma warning restore SKEXP0070
+});
+
+builder.Services.AddTransient<Kernel>((sp) =>
+{
+    var pluginCollection = new KernelPluginCollection();
+    return new Kernel(sp, pluginCollection);
+});
+
+#endregion
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -17,28 +48,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/TextGeneration", async ([FromKeyedServices("HuggingFace")] ITextGenerationService textGenerationService) =>
     {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
+        var i = await textGenerationService.GetTextContentsAsync(
+            """
+            Write a greeting.
+            """
+        );
+        
+        return i;
     })
-    .WithName("GetWeatherForecast");
+    .WithName("TextGeneration");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
