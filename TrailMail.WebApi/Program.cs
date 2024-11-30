@@ -1,34 +1,34 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.HuggingFace;
-using Microsoft.SemanticKernel.TextGeneration;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Scalar.AspNetCore;
 using TrailMail.WebApi.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 #region Semantic Kernel
 
-builder.Services.AddOptions<HuggingFaceOptions>()
-    .Bind(builder.Configuration.GetSection("HuggingFace"));
+builder.Services.AddOptions<GroqOptions>()
+    .Bind(builder.Configuration.GetSection("Groq"));
 
-builder.Services.AddKeyedSingleton<ITextGenerationService>("HuggingFace", (sp, _) =>
+builder.Services.AddSingleton<IChatCompletionService>((sp) =>
 {
-#pragma warning disable SKEXP0070
-
-    return new HuggingFaceTextGenerationService(
-        "microsoft/Phi-3-mini-4k-instruct",
-        apiKey: sp.GetRequiredService<IOptions<HuggingFaceOptions>>().Value.ApiKey
+#pragma warning disable SKEXP0010
+    return new OpenAIChatCompletionService(
+        sp.GetRequiredService<IOptions<GroqOptions>>().Value.ModelId,
+        endpoint: new Uri("https://api.groq.com/openai/v1"),
+        apiKey: sp.GetRequiredService<IOptions<GroqOptions>>().Value.ApiKey
     );
-
-#pragma warning restore SKEXP0070
+#pragma warning restore SKEXP0010
 });
 
 builder.Services.AddTransient<Kernel>((sp) =>
 {
-    var pluginCollection = new KernelPluginCollection();
-    return new Kernel(sp, pluginCollection);
+    var kernel = new Kernel(sp);
+    return kernel;
 });
 
 #endregion
@@ -47,17 +47,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.MapGet("/TextGeneration", async ([FromKeyedServices("HuggingFace")] ITextGenerationService textGenerationService) =>
-    {
-        var i = await textGenerationService.GetTextContentsAsync(
-            """
-            Write a greeting.
-            """
-        );
-        
-        return i;
-    })
-    .WithName("TextGeneration");
 
 app.Run();
