@@ -1,4 +1,4 @@
-namespace TrailMail.Tests.Tests;
+namespace TrailMail.Tests;
 
 public class IntegrationTest1
 {
