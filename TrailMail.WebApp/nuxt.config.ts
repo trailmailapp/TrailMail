@@ -19,5 +19,9 @@ export default defineNuxtConfig({
                 preset: Nora
             }
         }
+    },
+
+    runtimeConfig: {
+        public: { api: process.env.services__Api__https__0 }
     }
 })
